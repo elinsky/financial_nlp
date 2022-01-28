@@ -124,14 +124,37 @@ class Trainer:
             for x_batch_train in dataset.batch(32):
                 input_ids, token_type_ids, attention_mask, labels_pol, labels_cat = x_batch_train
 
+                # Open a GradientTape to record the operations run during the
+                # forward pass, which enables auto-differentiation.
                 with tf.GradientTape() as tape:
+
+                    # Run the forward pass through the model.
+                    # The operations that the model applies to its inputs are
+                    # going to be recorded on the GradientTape.
                     preds_cat, preds_pol = model.call(input_ids, token_type_ids, attention_mask)
+
+                    # Compute the loss value for this mini-batch.
                     loss = loss_fn.call(preds_cat, labels_cat, preds_pol, labels_pol)
                     print('loss: ', loss)
 
                     # TODO 2022-01-22 - Get training to work with actual backpropagation.
                     # TODO 2022-01-28 - Let's ignore the loss function for now, let's get other stuff working.
                     # TODO - get Tensorboard working
+
+                # Use the gradient tape to automatically retrieve the gradients
+                # of the trainable variables with respect to the loss.
+                # grads is a list of Tensors to be differentiated.
+                # There are 203 in my list right now.
+                # The shapes are all different. Here are some examples:
+                # (305522, 768), (2, 768), (512, 768), (768,), (768, 768), etc.
+                # Right now all the BERT weights are being updated during backprop.
+                # That's 199 tensors.
+                # Then my two dense layers add an additional 4 tensors.
+                grads = tape.gradient(target=loss, sources=model.trainable_weights)
+
+                # Run one step of gradient descent by updating the value of the
+                # variables to minimize the loss
+                optimizer.apply_gradients(zip(grads, model.trainable_weights))
 
 
 if __name__ == '__main__':

@@ -8,8 +8,8 @@ class BERTLinearTF(tf.keras.Model):
     def __init__(self, bert_type: str, num_cat: int, num_pol: int, **kwargs):
         super(BERTLinearTF, self).__init__(name='BERTLinearTF')
         self.bert: TFBertModel = TFBertModel.from_pretrained(bert_type, output_hidden_states=True)
-        self.ff_cat = tf.keras.layers.Dense(units=num_cat)
-        self.ff_pol = tf.keras.layers.Dense(units=num_pol)
+        self.ff_cat = tf.keras.layers.Dense(units=num_cat, activation='relu', use_bias=True) # TODO - look at activation functions
+        self.ff_pol = tf.keras.layers.Dense(units=num_pol, activation='relu', use_bias=True) # TODO - set activation function
 
     def call(self, input_ids: tf.Tensor, token_type_ids: tf.Tensor, attention_mask: tf.Tensor):
         outputs = self.bert(input_ids, token_type_ids, attention_mask)
@@ -19,9 +19,12 @@ class BERTLinearTF(tf.keras.Model):
         attention_mask = tf.cast(attention_mask, dtype=tf.float32)
 
         se = x * attention_mask  # se is (32, 128, 768)
-        den = tf.math.reduce_sum(attention_mask, axis=1)
-        se = tf.math.reduce_sum(se, axis=1) / den
+        den = tf.math.reduce_sum(attention_mask, axis=1) # (batch size, 1)
+        se = tf.math.reduce_sum(se, axis=1) / den # (batch size, 768)
 
+        # self.ff_cat adds two trainable weights to the model.
+        # (768, 3). These are the weights for the layer.
+        # (3,). These are the weights for the bias
         logits_cat = self.ff_cat(se)  # (batch size, num_cat)
         logits_pol = self.ff_pol(se)  # (batch size, num_pol)
 
