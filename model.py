@@ -4,8 +4,9 @@ import tensorflow_datasets as tfds
 import numpy as np
 
 
-class BERTLinearTF():
+class BERTLinearTF(tf.keras.Model):
     def __init__(self, bert_type: str, num_cat: int, num_pol: int, **kwargs):
+        super(BERTLinearTF, self).__init__(name='BERTLinearTF')
         self.bert: TFBertModel = TFBertModel.from_pretrained(bert_type, output_hidden_states=True)
         self.ff_cat = tf.keras.layers.Dense(units=num_cat)
         self.ff_pol = tf.keras.layers.Dense(units=num_pol)

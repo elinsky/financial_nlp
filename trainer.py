@@ -130,6 +130,8 @@ class Trainer:
                     print('loss: ', loss)
 
                     # TODO 2022-01-22 - Get training to work with actual backpropagation.
+                    # TODO 2022-01-28 - Let's ignore the loss function for now, let's get other stuff working.
+                    # TODO - get Tensorboard working
 
 
 if __name__ == '__main__':
