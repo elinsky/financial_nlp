@@ -8,12 +8,12 @@ from tqdm import tqdm
 class VocabGenerator:
 
     def __init__(self, save_results=True):
-        self.domain = config['domain']
-        self.bert_type = bert_mapper[self.domain]
+        self.domain: str = config['domain']
+        self.bert_type: str = bert_mapper[self.domain]
         self.mlm_model = TFBertForMaskedLM.from_pretrained(self.bert_type)
         self.tokenizer = AutoTokenizer.from_pretrained(self.bert_type)
-        self.root_path = path_mapper[self.domain]
-        self.save_results = save_results
+        self.root_path: str = path_mapper[self.domain]
+        self.save_results: bool = save_results
 
     def __call__(self):
         aspect_categories = aspect_category_mapper[self.domain]
@@ -29,39 +29,40 @@ class VocabGenerator:
     def generate_vocabularies(self, categories, seeds):
         # Initialise empty frequency table
         freq_table = {}
-        for cat in categories:
-            freq_table[cat] = {}
+        for category in categories:
+            freq_table[category] = {}
 
         # Populate vocabulary frequencies for each category
         for category in categories:  # Loop over each category (food, place, service)
             print(f'Generating vocabulary for {category} category...')
             with open(f'{self.root_path}/train.txt') as f:
-                for line in tqdm(f):  # Loop over each review
+                for line in tqdm(f):  # Loop over each document
                     text = line.strip()
-                    # Wouldn't this be better as something like: if seeds[category] in text:
                     for seed in seeds[category]:
                         if seed in text:
-                            # Take the sentence and tokenize it. Result is an integer for each word.
+                            # Tokenize the sentence. Result is a list containing an integer for each word.
                             ids = self.tokenizer(text, return_tensors='tf', truncation=True)['input_ids']
-                            # Convert the IDs (integer for each word) into words again
+                            # Convert the IDs (integer for each word) into a list of words
                             tokens = self.tokenizer.convert_ids_to_tokens(ids[0])
-                            # Pass the whole sentence (as IDs/integers) into the MLM
-                            # Model outputs a tensor of sentence length x BERT vocab size
-                            # For each word in the sentence, we output how likely each
-                            # word in the vocab is likely to be a replacement.
+
+                            # Pass the entire document (as IDs/integers) into the MLM. The model will mask each token
+                            # and output a probability distribution over replacement tokens
+                            # (1, document_length, BERT vocab size).
                             word_predictions = self.mlm_model(ids)[0]
-                            word_predictions = tf.cast(word_predictions,
-                                                       tf.float16)  # Cast as float16 to avoid bug in TensorFlow-Metal - https://developer.apple.com/forums/thread/689299
-                            # Find the top K predictions for each word.
+
+                            # Cast as float16 to avoid bug in TensorFlow-Metal
+                            # https://developer.apple.com/forums/thread/689299
+                            word_predictions = tf.cast(word_predictions, tf.float16)
+
+                            # Find the top K predictions for each word. (1, document_length, k), (1, document_length, k)
                             word_scores, word_ids = tf.math.top_k(input=word_predictions, k=K_1)
-                            # Remove unnecessary batch dimension?
-                            word_ids = tf.squeeze(word_ids)
-                            # Loop over each word in the sentence
+                            word_ids = tf.squeeze(word_ids)  # (1, document_length, k) -> (document_length, k)
+
+                            # Loop over each token in the document
                             for idx, token in enumerate(tokens):
-                                # Is the word in our sentence one of the seed words for our category?
+                                # Is the word in our document one of the seed words for our category?
                                 # e.g. category service. seed words are: tips, manager, waitress...
-                                if token in seeds[
-                                    category]:  # This probably isn't optimal either. I might need to re-write this whole function.
+                                if token in seeds[category]:
                                     # If so, then take the top K predictions for that word, and add them to our freq table.
                                     self.update_table(freq_table, category,
                                                       self.tokenizer.convert_ids_to_tokens(word_ids[idx]))
@@ -83,7 +84,7 @@ class VocabGenerator:
             vocabularies[category] = words
 
             if self.save_results:
-                # Saving vocabularies. I think there is a bug here! I think we should only be writing the top M words. I think we write all of them.
+                # Saving vocabularies. TODO I think there is a bug here! I think we should only be writing the top M words. I think we write all of them.
                 f = open(f'{self.root_path}/dict_{category}.txt', 'w')
                 for freq, word in words:
                     f.write(f'{word} {freq}\n')

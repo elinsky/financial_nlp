@@ -160,34 +160,19 @@ class Trainer:
             for x_batch_train in dataset.batch(32):
                 input_ids, token_type_ids, attention_mask, labels_pol, labels_cat = x_batch_train
 
-                # Open a GradientTape to record the operations run during the
-                # forward pass, which enables auto-differentiation.
                 with tf.GradientTape() as tape:
-                    # Run the forward pass through the model.
-                    # The operations that the model applies to its inputs are
-                    # going to be recorded on the GradientTape.
                     preds_cat, preds_pol = model(input_ids, token_type_ids, attention_mask)
-
-                    # Compute the loss value for this mini-batch.
                     loss = loss_fn.call(preds_cat, labels_cat, preds_pol, labels_pol)
                     print('loss: ', loss)
+                    grads = tape.gradient(target=loss, sources=model.trainable_weights)
+                    optimizer.apply_gradients(zip(grads, model.trainable_weights))
 
-                    # TODO - 1 - get Tensorboard working
-                    # TODO - 1.5 - Look into logging more metrics like accuracy and F1
-                    # TODO - 2.5 - get model checkpointing and model saving working
-                    # TODO - 3 - clean up code. clean up comments
-                    # TODO - 3.5 - Implement the evaluate function
-                    # TODO - 4 - Compare results with your code to researchers. Make sure metrics match or are close.
-                    # TODO - 5 - Get model working with financial dataset
-                    # TODO - someday maybe - plug in FinBert
-                    # TODO - someday maybe - get a larger BERT model, or a newer transformer architecture
-
-                # Use the gradient tape to automatically retrieve the gradients
-                # of the trainable variables with respect to the loss.
-                # grads is a list of Tensors to be differentiated.
-                # It includes the weights in BERT, and the weights from my layers on top
-                grads = tape.gradient(target=loss, sources=model.trainable_weights)
-
-                # Run one step of gradient descent by updating the value of the
-                # variables to minimize the loss
-                optimizer.apply_gradients(zip(grads, model.trainable_weights))
+# TODO - 1 - get Tensorboard working
+# TODO - 1.5 - Look into logging more metrics like accuracy and F1
+# TODO - 2.5 - get model checkpointing and model saving working
+# TODO - 3 - clean up code. clean up comments
+# TODO - 3.5 - Implement the evaluate function
+# TODO - 4 - Compare results with your code to researchers. Make sure metrics match or are close.
+# TODO - 5 - Get model working with financial dataset
+# TODO - someday maybe - plug in FinBert
+# TODO - someday maybe - get a larger BERT model, or a newer transformer architecture
