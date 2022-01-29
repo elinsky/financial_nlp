@@ -1,7 +1,5 @@
-from transformers import TFBertModel
 import tensorflow as tf
-import tensorflow_datasets as tfds
-import numpy as np
+from transformers import TFBertModel
 
 
 class BERTLinearTF(tf.keras.Model):
@@ -21,8 +19,8 @@ class BERTLinearTF(tf.keras.Model):
         attention_mask = tf.cast(attention_mask, dtype=tf.float32)
 
         se = x * attention_mask  # se is (32, 128, 768)
-        den = tf.math.reduce_sum(attention_mask, axis=1) # (batch size, 1)
-        se = tf.math.reduce_sum(se, axis=1) / den # (batch size, 768)
+        den = tf.math.reduce_sum(attention_mask, axis=1)  # (batch size, 1)
+        se = tf.math.reduce_sum(se, axis=1) / den  # (batch size, 768)
 
         logits_cat = self.ff_cat(se)  # (batch size, num_cat)
         logits_pol = self.ff_pol(se)  # (batch size, num_pol)
@@ -70,13 +68,16 @@ class LQLoss(tf.keras.Model):
         lq_pol = (1 - tf.pow(pol_pred_prob, self.q)) / self.q
 
         bsz_t = tf.constant([bsz])
-        sentiment_weights_bsz = tf.reshape(tf.tile(self.sentiment_weights, bsz_t), (bsz, n_pols))  # Reshape into (32, 2)
+        sentiment_weights_bsz = tf.reshape(tf.tile(self.sentiment_weights, bsz_t),
+                                           (bsz, n_pols))  # Reshape into (32, 2)
         aspect_weights_bsz = tf.reshape(tf.tile(self.aspect_weights, bsz_t), (bsz, n_cats))  # Reshape into (32, 3)
 
-        sentiment_weights_bsz = tf.gather_nd(sentiment_weights_bsz, idx_pol)  # get weight for the label. New shape is (32, 1)
+        sentiment_weights_bsz = tf.gather_nd(sentiment_weights_bsz,
+                                             idx_pol)  # get weight for the label. New shape is (32, 1)
         aspect_weights_bsz = tf.gather_nd(aspect_weights_bsz, idx_pol)  # get weight for the label. New shape is (32, 1)
 
-        cat_loss = tf.math.reduce_mean(self.alpha * lq_cat + (1 - self.alpha) * lq_cat * aspect_weights_bsz)  # aspect weights should be shape (32, 1). For some reason mine are (32, 3).
+        cat_loss = tf.math.reduce_mean(self.alpha * lq_cat + (
+                1 - self.alpha) * lq_cat * aspect_weights_bsz)  # aspect weights should be shape (32, 1). For some reason mine are (32, 3).
         pol_loss = tf.math.reduce_mean(self.alpha * lq_pol + (1 - self.alpha) * lq_pol * sentiment_weights_bsz)
 
         return cat_loss + pol_loss

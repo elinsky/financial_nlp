@@ -20,14 +20,15 @@ class Extracter:
         opinions = []
 
         with open(f'{self.root_path}/train.txt') as f:
-            for line in tqdm(f): # Loop over every sentence in the training set.
+            for line in tqdm(f):  # Loop over every sentence in the training set.
                 text = line.strip()
-                sentences.append(text) # Add sentence to sentence list
-                words = self.smodel(text) # Pass sentence into spacy model
+                sentences.append(text)  # Add sentence to sentence list
+                words = self.smodel(text)  # Pass sentence into spacy model
                 o = []
                 a = []
-                for word in words: # For each word in the sentence
-                    if word.tag_.startswith('JJ') or word.tag_.startswith('RR'): # I think the adverb (RR*), might be broken
+                for word in words:  # For each word in the sentence
+                    if word.tag_.startswith('JJ') or word.tag_.startswith(
+                            'RR'):  # I think the adverb (RR*), might be broken
                         # Adjective or Adverb. If the word is an adjective or adverb, then add it to our opinions list.
                         o.append(word.text)
                     if word.tag_.startswith('NN'):

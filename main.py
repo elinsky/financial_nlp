@@ -22,4 +22,3 @@ trainer.train_model(dataset)
 # trainer.save_model('model')
 # # trainer.load_model('model')
 # trainer.evaluate()
-

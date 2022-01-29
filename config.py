@@ -26,7 +26,8 @@ aspect_seed_mapper = {
     },
     'restaurant': {
         'food': {"food", "spicy", "sushi", "pizza", "taste", "delicious", "bland", "drinks", "flavourful"},
-        'place': {"ambience", "atmosphere", "seating", "surroundings", "environment", "location", "decoration", "spacious", "comfortable", "place"},
+        'place': {"ambience", "atmosphere", "seating", "surroundings", "environment", "location", "decoration",
+                  "spacious", "comfortable", "place"},
         'service': {"tips", "manager", "waitress", "rude", "forgetful", "host", "server", "service", "quick", "staff"}
     }
 }
@@ -37,11 +38,14 @@ sentiment_category_mapper = {
 sentiment_seed_mapper = {
     'laptop': {
         'positive': {"good", "great", 'nice', "excellent", "perfect", "impressed", "best", "thin", "cheap", "fast"},
-        'negative': {"bad", "disappointed", "terrible", "horrible", "small", "slow", "broken", "complaint", "malware", "virus", "junk", "crap", "cramped", "cramp"}
+        'negative': {"bad", "disappointed", "terrible", "horrible", "small", "slow", "broken", "complaint", "malware",
+                     "virus", "junk", "crap", "cramped", "cramp"}
     },
     'restaurant': {
-        'positive': {"good", "great", 'nice', "excellent", "perfect", "fresh", "warm", "friendly", "delicious", "fast", "quick", "clean"},
-        'negative': {"bad", "terrible", "horrible", "tasteless", "awful", "smelled", "unorganized", "gross", "disappointment", "spoiled", "vomit", "cold", "slow", "dirty", "rotten", "ugly"}
+        'positive': {"good", "great", 'nice', "excellent", "perfect", "fresh", "warm", "friendly", "delicious", "fast",
+                     "quick", "clean"},
+        'negative': {"bad", "terrible", "horrible", "tasteless", "awful", "smelled", "unorganized", "gross",
+                     "disappointment", "spoiled", "vomit", "cold", "slow", "dirty", "rotten", "ugly"}
     }
 }
 M = {
