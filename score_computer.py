@@ -24,14 +24,12 @@ class ScoreComputer:
         polarities = sentiment_category_mapper[self.domain]  # ['negative', 'positive']
         K = K_2  # 30
 
-        aspect_sets = self.load_vocabulary(self.aspect_vocabularies, M[
-            self.domain])  # this is a dict. key is each category (food, place, service). Value is a set of all 'similar' words that we generated as our expanded vocabulary
+        aspect_sets = self.load_vocabulary(self.aspect_vocabularies, M[self.domain])  # this is a dict. key is each category (food, place, service). Value is a set of all 'similar' words that we generated as our expanded vocabulary
         polarity_sets = self.load_vocabulary(self.sentiment_vocabularies, M[self.domain])
 
         f = open(f'{self.root_path}/scores.txt', 'w')
 
-        for sentence, aspect, opinion in tqdm(zip(sentences, aspects,
-                                                  opinions)):  # Loop over each sentence. Aspect is all the nouns in that sentence. Opinion is all the adjectives and adberbs. Remember the aspects and opinions are literally all nouns and adjectives. No filter for just food stuff.
+        for sentence, aspect, opinion in tqdm(zip(sentences, aspects, opinions)):  # Loop over each sentence. Aspect is all the nouns in that sentence. Opinion is all the adjectives and adberbs. Remember the aspects and opinions are literally all nouns and adjectives. No filter for just food stuff.
             aspect_words = set()
             opinion_words = set()
             if aspect != '##':
@@ -40,8 +38,7 @@ class ScoreComputer:
                 opinion_words = set(opinion.split())
             ids = self.tokenizer(sentence, return_tensors='tf', truncation=True)[
                 'input_ids']  # Tokenize sentence into IDs
-            tokens = self.tokenizer.convert_ids_to_tokens(ids[
-                                                              0])  # Convert ids back into words. Note that our tokens are actually a little smaller than words. And if we don't have a word in the vocab, then I think it is replaced with ## or #
+            tokens = self.tokenizer.convert_ids_to_tokens(ids[0])  # Convert ids back into words. Note that our tokens are actually a little smaller than words. And if we don't have a word in the vocab, then I think it is replaced with ## or #
             word_predictions = self.mlm_model(ids)[
                 0]  # Pass tokens into model. Get likelihood of replacement for each one. E.g. tensor is size: # words in sentence x # words in BERT vocab
             word_predictions = tf.cast(word_predictions,

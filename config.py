@@ -48,7 +48,7 @@ sentiment_seed_mapper = {
                      "disappointment", "spoiled", "vomit", "cold", "slow", "dirty", "rotten", "ugly"}
     }
 }
-M = {
+M = { # Desired vocab size
     'laptop': 150,
     'restaurant': 100
 }

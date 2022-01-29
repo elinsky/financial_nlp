@@ -27,12 +27,12 @@ class Extracter:
                 o = []
                 a = []
                 for word in words:  # For each word in the sentence
-                    if word.tag_.startswith('JJ') or word.tag_.startswith(
-                            'RR'):  # I think the adverb (RR*), might be broken
-                        # Adjective or Adverb. If the word is an adjective or adverb, then add it to our opinions list.
+                    # I think the adverb (RR*), might be broken
+                    if word.tag_.startswith('JJ') or word.tag_.startswith('RR'):  ## JJ = Adjective. RR = Adverb.
+                        # If the word is an adjective or adverb, then add it to our opinions list.
                         o.append(word.text)
-                    if word.tag_.startswith('NN'):
-                        # Noun. If the word is a noun, add it to our aspect list. Could be any noun at this point.
+                    if word.tag_.startswith('NN'):  ## NN = Noun.
+                        # If the word is a noun, add it to our aspect list.
                         a.append(word.text)
                 opinions.append(' '.join(o) if len(o) > 0 else '##')
                 aspects.append(' '.join(a) if len(a) > 0 else '##')

@@ -3,6 +3,28 @@ from config import *
 from filter_words import filter_words
 import tensorflow as tf
 from tqdm import tqdm
+from typing import Dict
+
+
+def generate_disjoint_sets(categories: list, freq_table: Dict[str, Dict[str, int]]):
+    """
+    Given a list of categories. The frequency table is a dictionary where the keys are categories, and the values are
+    the frequency tables (key: word, value: frequency). The function removes words that occur in the vocab of multiple
+    categories. We save the word that appears more frequently. Returns the same frequency table.
+    """
+    for category in categories:
+        for key in freq_table[category]:
+            for cat in categories:
+                if freq_table[cat].get(key) is not None and freq_table[cat][key] < freq_table[category][key]:
+                    del freq_table[cat][key]
+    return freq_table
+
+
+def update_table(freq_table, cat, tokens):
+    for token in tokens:
+        if token in filter_words or '##' in token:
+            continue
+        freq_table[cat][token] = freq_table[cat].get(token, 0) + 1
 
 
 class VocabGenerator:
@@ -64,15 +86,11 @@ class VocabGenerator:
                                 # e.g. category service. seed words are: tips, manager, waitress...
                                 if token in seeds[category]:
                                     # If so, then take the top K predictions for that word, and add them to our freq table.
-                                    self.update_table(freq_table, category,
+                                    update_table(freq_table, category,
                                                       self.tokenizer.convert_ids_to_tokens(word_ids[idx]))
 
         # Remove words appearing in multiple vocabularies (generate disjoint sets)
-        for category in categories:
-            for key in freq_table[category]:
-                for cat in categories:
-                    if freq_table[cat].get(key) != None and freq_table[cat][key] < freq_table[category][key]:
-                        del freq_table[cat][key]
+        freq_table = generate_disjoint_sets(categories, freq_table)
 
         vocabularies = {}
 
@@ -91,9 +109,3 @@ class VocabGenerator:
                 f.close()
 
         return vocabularies
-
-    def update_table(self, freq_table, cat, tokens):
-        for token in tokens:
-            if token in filter_words or '##' in token:
-                continue
-            freq_table[cat][token] = freq_table[cat].get(token, 0) + 1
