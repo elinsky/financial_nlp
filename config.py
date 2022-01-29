@@ -51,7 +51,12 @@ M = {
 K_1 = 10
 K_2 = 30
 lambda_threshold = 0.5
+# In the BERT paper, they had success with a batch size of 16 and 32 when
+# fine-tuning.
 batch_size = 32
 validation_data_size = 100
+# In the bert paper, they used Adam and found the following range of possible
+# values worked well across all tasks: 5e-5, 3e-5, 2e-5
 learning_rate = 1e-5
+# In the BERT paper they had success fine-tuning with 2, 3, and 4 epochs.
 epochs = 20
