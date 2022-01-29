@@ -63,11 +63,15 @@ def tokenize_sentences(sentences: List[str], tokenizer: PreTrainedTokenizerBase)
         truncation=True)
 
     # Unpack encoded dict
-    input_ids = encoded_dict['input_ids']  # (batch size, 128). Integer encoded sentences with padding on the end.
-    token_type_ids = encoded_dict[
-        'token_type_ids']  # (batch size, 128). This appears to be used when you need to pass into a downstream model multiple sentences. E.g. question answering. You want to pass in two sentences (say a context sentence. and a question). And you want to indicate to the model which sentence is which.
-    attention_mask = encoded_dict[
-        'attention_mask']  # (batch_size, 128). This is 1s for the real tokens, and 0s for the padded tokens. This tells the downstream model which tokens to 'attend' to, and which it can ignore.
+    # input_ids (batch size, 128). Integer encoded sentences with padding on the end.
+    # token_type_ids (batch size, 128). This appears to be used when you need to pass into a downstream model multiple
+    # sentences. E.g. question answering. You want to pass in two sentences (say a context sentence. and a question).
+    # And you want to indicate to the model which sentence is which.
+    # attention_mask (batch_size, 128). This is 1s for the real tokens, and 0s for the padded tokens. This tells the
+    # downstream model which tokens to 'attend' to, and which it can ignore.
+    input_ids = encoded_dict['input_ids']
+    token_type_ids = encoded_dict['token_type_ids']
+    attention_mask = encoded_dict['attention_mask']
 
     tf.cast(attention_mask, dtype=tf.float32)
 
@@ -172,6 +176,7 @@ class Trainer:
                     # TODO - 1.5 - Look into logging more metrics like accuracy and F1
                     # TODO - 2.5 - get model checkpointing and model saving working
                     # TODO - 3 - clean up code. clean up comments
+                    # TODO - 3.5 - Implement the evaluate function
                     # TODO - 4 - Compare results with your code to researchers. Make sure metrics match or are close.
                     # TODO - 5 - Get model working with financial dataset
                     # TODO - someday maybe - plug in FinBert
