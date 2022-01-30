@@ -1,8 +1,8 @@
-from vocab_generator import VocabGenerator
 from extracter import Extracter
-from score_computer import ScoreComputer
 from labeler import Labeler
+from score_computer import ScoreComputer
 from trainer import Trainer
+from vocab_generator import VocabGenerator
 
 vocabGenerator = VocabGenerator()
 aspect_vocabularies, sentiment_vocabularies = vocabGenerator()
@@ -19,6 +19,4 @@ labeler()
 trainer = Trainer()
 dataset = trainer.load_training_data()
 trainer.train_model(dataset)
-# trainer.save_model('model')
-# # trainer.load_model('model')
-# trainer.evaluate()
+trainer.save_model('model')
