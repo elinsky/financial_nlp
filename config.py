@@ -63,4 +63,4 @@ validation_data_size = 100
 # values worked well across all tasks: 5e-5, 3e-5, 2e-5
 learning_rate = 1e-5
 # In the BERT paper they had success fine-tuning with 2, 3, and 4 epochs.
-epochs = 10
+epochs = 20

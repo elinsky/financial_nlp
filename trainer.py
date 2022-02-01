@@ -7,6 +7,7 @@ import tensorflow as tf
 from tqdm import tqdm, trange
 from transformers import AutoTokenizer, BertTokenizerFast
 from transformers import PreTrainedTokenizerBase
+from sklearn.metrics import classification_report
 
 from config import *
 from model import BERTLinearTF, LQLoss
@@ -163,7 +164,7 @@ class Trainer:
         self.aspect_encoder: Dict[str, int]
         self.aspect_decoder, self.aspect_encoder = create_categorical_encoder_and_decoder(self.categories)
 
-    def load_training_data(self):
+    def load_training_data(self): # TODO - probably rename this to something like 'load_labeled_training_data'. Make it clear that this is the unsupervised labeled data.
         sentences, cats, pols = parse_labels_file(self.root_path, self.aspect_encoder, self.polarity_encoder)
         labels_cat, labels_pol = tf.convert_to_tensor(cats), tf.convert_to_tensor(pols)
         input_ids, token_type_ids, attention_mask = tokenize_sentences(sentences, self.tokenizer)
@@ -180,7 +181,6 @@ class Trainer:
         np.random.seed(value)
         tf.random.set_seed(value)
 
-    # @tf.function TODO - consider getting this to work. This provides a performance speed up.
     def train_model(self, dataset: tf.data.Dataset, epochs=epochs):
         # TODO - factor out functions for train_step and validate_step, test_step https://www.tensorflow.org/tensorboard/get_started
         validation_dataset, train_dataset = split_dataset(dataset, 0.10)
@@ -239,6 +239,7 @@ class Trainer:
             # Reset metrics every epoch
             train_loss_metric.reset_states()
             validation_loss_metric.reset_states()
+            # train_cat_precision_metric.reset_states()
 
         # Save model
         now = datetime.now()
@@ -246,15 +247,41 @@ class Trainer:
         self.save_model(dt_string + '-model')
 
         # Evaluate on the test set
+        n_categories = 3  # TODO - remove hardcodings
+        n_polarities = 2  # TODO - remove hardcodings
+
+        test_predicted_category_probabilities = tf.zeros((0, n_categories), dtype=tf.float32)
+        test_predicted_polarity_probabilities = tf.zeros((0, n_polarities), dtype=tf.float32)
+        test_actual_category_classes = tf.zeros((0, 1), dtype=tf.int32)
+        test_actual_polarity_classes = tf.zeros((0, 1), dtype=tf.int32)
+
         test_dataset = load_test_dataset(self.root_path, self.tokenizer)
-        for test_input_ids, test_token_type_ids, test_attention_mask, test_labels_pol, test_labels_cat in test_dataset.batch(
-                32):
-            test_preds_cat, test_preds_pol = model(test_input_ids, test_token_type_ids, test_attention_mask)
-            test_loss = loss_fn.call(test_preds_cat, test_labels_cat, loss_fn.aspect_weights) + \
-                        loss_fn.call(test_preds_pol, test_labels_pol, loss_fn.sentiment_weights)
-            # Log loss
-            # TODO - replace with metric.update_state. Then log/print metric after going through whole validation set.
-            print('test loss: ', test_loss)
+        for test_input_ids_batch, test_token_type_ids_batch, test_attention_mask_batch, test_labels_pol_batch, test_labels_cat_batch in test_dataset.batch(32):
+            test_preds_cat_batch, test_preds_pol_batch = model(test_input_ids_batch, test_token_type_ids_batch, test_attention_mask_batch)
+            test_loss_batch = loss_fn.call(test_preds_cat_batch, test_labels_cat_batch, loss_fn.aspect_weights) + \
+                              loss_fn.call(test_preds_pol_batch, test_labels_pol_batch, loss_fn.sentiment_weights)
+
+            test_predicted_category_probabilities = tf.concat([test_predicted_category_probabilities, test_preds_cat_batch], 0)
+            test_predicted_polarity_probabilities = tf.concat([test_predicted_polarity_probabilities, test_preds_pol_batch], 0)
+            test_actual_category_classes = tf.concat([test_actual_category_classes, tf.expand_dims(test_labels_cat_batch, 1)], 0)
+            test_actual_polarity_classes = tf.concat([test_actual_polarity_classes, tf.expand_dims(test_labels_pol_batch, 1)], 0)
+
+        # Convert predicted probabilities to hard classes
+        test_predicted_category_classes = tf.math.argmax(test_predicted_category_probabilities, axis=1)
+        test_predicted_polarity_classes = tf.math.argmax(test_predicted_polarity_probabilities, axis=1)
+
+        # Convert to numpy
+        test_predicted_polarity_classes_np = test_predicted_polarity_classes.numpy()
+        test_predicted_category_classes_np = test_predicted_category_classes.numpy()
+        test_actual_polarity_classes_np = test_actual_polarity_classes.numpy()
+        test_actual_category_classes_np = test_actual_category_classes.numpy()
+
+        print("Category classification report")
+        print(classification_report(test_actual_category_classes_np, test_predicted_category_classes_np))
+
+        print("Polarity classification report")
+        print(classification_report(test_actual_polarity_classes_np, test_predicted_polarity_classes_np))
+
 
     def save_model(self, name):
         self.model.save(f'{self.root_path}/{name}.tf')
@@ -263,10 +290,11 @@ class Trainer:
         self.model = tf.keras.models.load_model(f'{self.root_path}/{name}.tf')
 
 # TODO - 1 - Look into logging more metrics like accuracy and F1, precision, recall
-# TODO - 2 - clean up code. clean up comments
-# TODO - 3 - Compare results with your code to researchers. Make sure metrics match or are close.
-
+# TODO - 2 - clean up code. clean up comments. and refactor as much as you can
+#            TODO - do the authors fine-tune BERT, or just the top layers?
+# TODO - 4 - clean up console warnings
 # TODO - 5 - Get model working with financial dataset
 # TODO - someday maybe - plug in FinBert
 # TODO - someday maybe - get a larger BERT model, or a newer transformer architecture
 # TODO - someday maybe - checkpoint your model
+# TODO - someday maybe - look into classification metrics for imbalanced datasets.

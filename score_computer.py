@@ -6,9 +6,9 @@ from filter_words import filter_words
 
 
 class ScoreComputer:
-    '''
-    Computes unnormalised overlap scores for each aspect category and sentiment polarity and saves in "scores.txt" file
-    '''
+    """
+    Computes unnormalized overlap scores for each aspect category and sentiment polarity and saves in "scores.txt" file
+    """
 
     def __init__(self, aspect_vocabularies, sentiment_vocabularies):
         self.domain = config['domain']
@@ -16,7 +16,7 @@ class ScoreComputer:
         self.mlm_model = TFBertForMaskedLM.from_pretrained(self.bert_type)
         self.tokenizer = AutoTokenizer.from_pretrained(self.bert_type)
         self.root_path = path_mapper[self.domain]
-        self.aspect_vocabularies = aspect_vocabularies  # This is the expanded vocab list we generated in vocab_generator
+        self.aspect_vocabularies = aspect_vocabularies  # This is the expanded vocab list generated in vocab_generator
         self.sentiment_vocabularies = sentiment_vocabularies  # Same here
 
     def __call__(self, sentences, aspects, opinions):

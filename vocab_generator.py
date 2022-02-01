@@ -62,6 +62,7 @@ class VocabGenerator:
                     text = line.strip()
                     for seed in seeds[category]:
                         if seed in text:
+                            # TODO - refactor this code block. It is duplicated in score_computer.py
                             # Tokenize the sentence. Result is a list containing an integer for each word.
                             ids = self.tokenizer(text, return_tensors='tf', truncation=True)['input_ids']
                             # Convert the IDs (integer for each word) into a list of words
@@ -85,9 +86,9 @@ class VocabGenerator:
                                 # Is the word in our document one of the seed words for our category?
                                 # e.g. category service. seed words are: tips, manager, waitress...
                                 if token in seeds[category]:
-                                    # If so, then take the top K predictions for that word, and add them to our freq table.
-                                    update_table(freq_table, category,
-                                                      self.tokenizer.convert_ids_to_tokens(word_ids[idx]))
+                                    # If so, then take the top K predictions for that word, and add them to our freq
+                                    # table.
+                                    update_table(freq_table, category, self.tokenizer.convert_ids_to_tokens(word_ids[idx]))
 
         # Remove words appearing in multiple vocabularies (generate disjoint sets)
         freq_table = generate_disjoint_sets(categories, freq_table)
@@ -102,7 +103,8 @@ class VocabGenerator:
             vocabularies[category] = words
 
             if self.save_results:
-                # Saving vocabularies. TODO I think there is a bug here! I think we should only be writing the top M words. I think we write all of them.
+                # Saving vocabularies. TODO I think there is a bug here. I think we should only be writing the top M
+                # words. Here I think we write all of them.
                 f = open(f'{self.root_path}/dict_{category}.txt', 'w')
                 for freq, word in words:
                     f.write(f'{word} {freq}\n')
